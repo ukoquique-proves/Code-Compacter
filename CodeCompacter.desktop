@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Code Compacter
+Comment=Backup project to single text file
+Exec=/root/COMPACTADOR/Code_Compacter/AppRun "%f"
+Path=/root/COMPACTADOR/Code_Compacter
+Icon=text-x-script
+Terminal=false
+Type=Application
+Categories=Development;Utility;
