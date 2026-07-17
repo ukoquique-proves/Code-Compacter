@@ -1,0 +1,31 @@
+# Changelog
+
+## Unreleased
+
+### Added
+- `Extra ignores` field in the GUI — add patterns like `*.log, temp/` at runtime without editing code
+- Persistent output path label under the progress bar so the full output path stays visible after completion
+- `requirements.txt` declaring `tkinterdnd2>=0.4.2`
+- `build_linux.sh` — build script that locates the `tkdnd` Tcl/Tk data directory inside the tkinterdnd2 package and passes it to PyInstaller via `--add-data`, fixing the silent drag-and-drop failure in standalone binaries
+- `Dockerfile.build` — builds against `python:3.13-slim-bullseye` (glibc 2.31) with `tk-dev` installed, bypassing the host `libpython3.13.so.1.0` and `python3.13-dev` package conflict
+- `docker_build.sh` — one-command build: runs Docker build, extracts `dist/CodeCompacter/` to the workspace
+- `TROUBLESHOOTING.md` documenting all three build blockers encountered and their resolutions
+- `README.md` rewritten to reflect current features, correct install commands, and link to TROUBLESHOOTING.md
+
+### Changed
+- `build_linux.sh` now uses `--onedir` instead of `--onefile` as default build mode
+- `compact_directory_logic` in `src/core.py` now accepts an `extra_ignores` parameter that merges with `DEFAULT_IGNORES` at runtime
+- Missing `tkinterdnd2` now surfaces in the status bar ("Drag-and-drop not bundled — use Browse or drop onto the desktop icon") instead of only appearing in the processing log
+- GUI minimum height increased to 540×440 to accommodate the new fields
+
+### Fixed
+- Standalone binary drag-and-drop was silently broken when built with `--hidden-import tkinterdnd2` alone; `build_linux.sh` fixes this by bundling the tkdnd data files
+- CLI `--ignore` flag was documented in the README options table but never implemented; `code_compacter.py` now accepts `--ignore PATTERN [PATTERN ...]` and passes it through to `compact_directory_logic` as `extra_ignores`
+
+## 1.0.0 — Initial release
+
+- GUI (`code_compacter_gui.py`) with drag-and-drop via tkinterdnd2, folder browse, progress bar, and processing log
+- CLI (`code_compacter.py`) with source/output arguments
+- `src/core.py` with file walking, binary detection, encoding fallback, and language tagging
+- `AppRun` and `CodeCompacter.desktop` for ROX-Filer / Puppy Linux integration
+- `run_gui.sh` silent launcher and `run_gui_terminal.sh` debug launcher

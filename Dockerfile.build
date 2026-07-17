@@ -1,0 +1,19 @@
+FROM python:3.13-slim-bullseye
+
+# Build against glibc 2.31 (Debian bullseye) for maximum Linux compatibility.
+# Binaries produced here will run on any system with glibc >= 2.31,
+# which covers PuppyLinux and most distros from 2021 onward.
+#
+# tk-dev is required because build_linux.sh locates the tkdnd data path via
+# the tkinterdnd2 package, which imports tkinter, which needs libtk8.6.so.
+# The slim image omits Tk by default.
+
+RUN apt-get update && apt-get install -y --no-install-recommends tk-dev && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+COPY . .
+
+RUN pip install --no-cache-dir -r requirements.txt pyinstaller
+
+RUN bash build_linux.sh

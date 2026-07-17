@@ -2,42 +2,64 @@
 
 A Python tool that compacts an entire project into a single, AI-readable text file.
 
-## GUI Version (Recommended)
+## Architecture
 
-Launch the graphical interface with silent launch and drag-and-drop support:
+- `src/core.py` — central processing logic (file filtering, language detection, compacting)
+- `code_compacter_gui.py` — GUI wrapper using Tkinter
+- `code_compacter.py` — CLI wrapper for terminal use
+
+## Requirements
+
+- Python 3.13+
+- `python3-tk` (tkinter)
+- `tkinterdnd2` (optional — enables drag-and-drop into the window)
+
+Install tkinter on Debian/Puppy Linux:
+
+```bash
+apt-get install python3-tk
+```
+
+Install tkinterdnd2:
+
+```bash
+pip install -r requirements.txt --break-system-packages
+```
+
+## Running the GUI
+
+```bash
+python3 code_compacter_gui.py
+```
+
+Or use the silent launcher (no console window):
 
 ```bash
 ./run_gui.sh
 ```
 
 **Features:**
-- **Drag-and-Drop**: Drag a folder onto the `CodeCompacter.desktop` icon or the app directory itself.
-- **Silent Launch**: No messy console windows next to your app.
-- **Smart Selection**: Click the drop zone or "Browse" to select a project folder.
-- **AI Ready**: Generates a structured `.txt` file optimized for AI context.
-- **Open Output**: View the result immediately with the "Open Output" button.
+- Drag a folder onto the drop zone (requires tkinterdnd2) or use Browse
+- Extra ignores field — add patterns like `*.log, temp/` on top of the defaults
+- Progress bar and persistent output path label after completion
+- Open Output button to view the result immediately
+- If tkinterdnd2 is not installed, status bar says so and Browse still works
 
-## CLI Version
+## CLI
 
 ```bash
-# Backup current directory
+# Compact current directory
 python3 code_compacter.py .
 
-# Backup specific project
+# Compact a specific project
 python3 code_compacter.py /path/to/project
 
 # Custom output filename
-python3 code_compacter.py . -o my_backup.txt
+python3 code_compacter.py . -o my_compact.txt
 ```
 
 ## Output Format
 
-The generated file contains:
-- **Header** with source path and timestamp
-- **Each file** marked with its relative path and language
-- **Summary** with statistics and binary file list
-
-Example output:
 ```
 --------------------------------------------------------------------------------
 FILE: src/main.py
@@ -50,67 +72,9 @@ def main():
 SUMMARY
 ================================================================================
 Files processed: 42
-Files skipped: 8
 Total lines: 1,247
 ================================================================================
 ```
-
-## Features
-
-- **Smart filtering**: Ignores common non-code files (`.git`, `node_modules`, binaries, etc.)
-- **Language detection**: Tags each file with its programming language
-- **Binary detection**: Automatically skips binary files
-- **Encoding handling**: Tries multiple encodings (UTF-8, Latin-1, etc.)
-- **Clean format**: Structured for easy AI parsing
-
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `-o, --output` | Custom output filename |
-| `--ignore` | Additional ignore patterns |
-| `--no-binary-info` | Skip listing binary files |
-| `--include-defaults` | Use only default ignores |
-
-## Puppy Linux / ROX-Filer Support
-
-This project is optimized for Puppy Linux:
-
-**Option 1: AppDir Drag-and-Drop (Recommended)**
-Drag any project folder and drop it directly onto the `Code_Compacter` folder. The `AppRun` script handles the rest.
-
-**Option 2: Desktop Shortcut**
-Drag a folder onto `CodeCompacter.desktop` for instant compaction.
-
-**Option 3: Terminal launcher (shows errors)**
-```bash
-./run_gui_terminal.sh
-```
-
-**Option 4: Run directly**
-```bash
-python3 code_compacter_gui.py
-```
-
-**Diagnostic - check if requirements are met:**
-```bash
-python3 -c "import tkinter; print('Tkinter: OK')"
-```
-
-**If tkinter is missing, install it:**
-```bash
-# PuppyLinux/Debian based
-apt-get install python3-tk
-
-# Or use the package manager (PPM) in PuppyLinux
-```
-
-**Most likely cause**: PuppyLinux uses `rxvt` or `urxvt` terminal. The `run_gui_terminal.sh` tries these automatically. If still failing, open a terminal manually and run:
-```bash
-cd /root/COMPACTADOR/Code_Compacter
-python3 code_compacter_gui.py 2>&1
-```
-This will show any error messages.
 
 ## Ignored by Default
 
@@ -121,3 +85,61 @@ This will show any error messages.
 - Cache: `__pycache__`, `.pytest_cache`
 - Binary files: images, videos, executables, archives
 - Lock files: `package-lock.json`, `poetry.lock`, etc.
+
+Extra patterns can be added at runtime via the GUI's "Extra ignores" field or the CLI's `--ignore` flag.
+
+## Puppy Linux / ROX-Filer
+
+**Run directly (most reliable):**
+
+```bash
+python3 code_compacter_gui.py
+```
+
+**AppDir drag-and-drop:**
+Drop any project folder onto the `Code_Compacter` folder itself. `AppRun` handles the rest.
+
+**Desktop shortcut:**
+Copy the `.desktop` file to `/root/Desktop/` — ROX-Filer only picks it up from there:
+
+```bash
+cp CodeCompacter.desktop /root/Desktop/
+chmod +x /root/Desktop/CodeCompacter.desktop
+```
+
+**Debug launcher (shows errors in terminal):**
+
+```bash
+./run_gui_terminal.sh
+```
+
+## Building a Standalone Binary
+
+The recommended way is via Docker, which sidesteps the host Python shared library and glibc issues entirely:
+
+```bash
+bash docker_build.sh
+```
+
+This produces `dist/CodeCompacter/` — zip it and distribute. Built against glibc 2.31 (Debian bullseye), so it runs on PuppyLinux and any system with glibc ≥ 2.31.
+
+If you want to build directly on the host (requires `python3.13-dev` to be installable):
+
+```bash
+pip install pyinstaller --break-system-packages
+bash build_linux.sh
+```
+
+`build_linux.sh` passes the tkdnd data directory to PyInstaller via `--add-data`. This is the critical step — `--hidden-import tkinterdnd2` alone produces a binary where drag-and-drop silently doesn't work.
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for the full breakdown of issues encountered, including why the host build is blocked on this system and the glibc compatibility considerations.
+
+## Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for known issues, including:
+
+- `libpython3.13.so.1.0` not found on host build
+- `libtk8.6.so` missing in slim Docker image (fixed in `Dockerfile.build`)
+- glibc compatibility and how to target older systems
+- Desktop icon not responding in ROX-Filer
+- AppRun permission denied
