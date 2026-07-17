@@ -12,6 +12,8 @@ docker build -f Dockerfile.build -t $IMAGE .
 
 echo "==> Extracting binary..."
 mkdir -p dist
+rm -rf dist/CodeCompacter
+docker rm $CONTAINER 2>/dev/null || true
 docker create --name $CONTAINER $IMAGE
 docker cp $CONTAINER:/build/dist/CodeCompacter ./dist/CodeCompacter
 docker rm $CONTAINER

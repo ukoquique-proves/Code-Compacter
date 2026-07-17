@@ -21,6 +21,7 @@ fi
 pyinstaller code_compacter_gui.py \
     --noconsole \
     --onedir \
+    -y \
     --name CodeCompacter \
     --add-data "$TKDND_PATH:tkinterdnd2/tkdnd" \
     --hidden-import tkinterdnd2
