@@ -39,11 +39,23 @@ Or use the silent launcher (no console window):
 ```
 
 **Features:**
-- Drag a folder onto the drop zone (requires tkinterdnd2) or use Browse
+- Drop a folder onto the app icon — compacts immediately, no window (headless mode)
+- Drag a folder onto the drop zone inside the window (requires tkinterdnd2) or use Browse
 - Extra ignores field — add patterns like `*.log, temp/` on top of the defaults
 - Progress bar and persistent output path label after completion
 - Open Output button to view the result immediately
 - If tkinterdnd2 is not installed, status bar says so and Browse still works
+
+## Headless / silent mode
+
+Dropping a folder onto the desktop icon or AppDir runs compaction silently with no window:
+
+```bash
+# Same as dropping onto the icon
+python3 code_compacter_gui.py --headless /path/to/project
+```
+
+A desktop notification appears on completion (`notify-send` if available, `xmessage` as fallback). Opening the icon with no argument still opens the full GUI.
 
 ## CLI
 

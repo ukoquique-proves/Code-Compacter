@@ -222,28 +222,114 @@ class CodeCompacterGUI:
         
     def open_output(self):
         if self.output_path and self.output_path.exists():
-            if sys.platform == 'darwin': os.system(f'open "{self.output_path}"')
-            elif sys.platform == 'win32': os.startfile(self.output_path)
-            else: os.system(f'xdg-open "{self.output_path}"')
+            import subprocess
+            if sys.platform == 'darwin':
+                subprocess.Popen(["open", str(self.output_path)])
+            elif sys.platform == 'win32':
+                os.startfile(self.output_path)
+            else:
+                subprocess.Popen(["xdg-open", str(self.output_path)])
+
+def _notify_headless(filename: str):
+    """Best-effort desktop notification after a headless run.
+    Uses platform-native mechanisms; silently does nothing if unavailable.
+    The output file is always the ground truth — notification is informational only.
+    """
+    import subprocess
+    msg = f"✓ {filename} created"
+
+    if sys.platform == 'win32':
+        # Windows toast via PowerShell — no extra dependencies required
+        ps = (
+            f'[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null;'
+            f'$t = [Windows.UI.Notifications.ToastTemplateType]::ToastText01;'
+            f'$x = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent($t);'
+            f'$x.GetElementsByTagName("text")[0].AppendChild($x.CreateTextNode("{msg}")) | Out-Null;'
+            f'$n = [Windows.UI.Notifications.ToastNotification]::new($x);'
+            f'[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Code Compacter").Show($n);'
+        )
+        subprocess.Popen(
+            ["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps],
+            creationflags=0x08000000  # CREATE_NO_WINDOW
+        )
+
+    elif sys.platform == 'darwin':
+        subprocess.Popen([
+            "osascript", "-e",
+            f'display notification "{msg}" with title "Code Compacter"'
+        ])
+
+    else:
+        # Linux / Puppy Linux — try notify-send, fall back to xmessage
+        if subprocess.run(["which", "notify-send"], capture_output=True).returncode == 0:
+            subprocess.Popen(["notify-send", "Code Compacter", msg])
+        elif subprocess.run(["which", "xmessage"], capture_output=True).returncode == 0:
+            subprocess.Popen(["xmessage", "-timeout", "4", msg])
+        # If neither is available, the file appearing is the signal — no action needed
+
+
+def _run_headless(path: str):
+    """Run compaction directly with no GUI. Used when --headless flag is passed."""
+    source = Path(path).resolve()
+    if not source.is_dir():
+        print(f"Error: not a directory: {source}")
+        sys.exit(1)
+
+    output = source.parent / f"{source.name}_compact.txt"
+    print(f"Compacting: {source}")
+    print(f"Output:     {output}")
+
+    try:
+        stats = compact_directory_logic(
+            source,
+            output,
+            log_callback=lambda m: print(f"  {m}"),
+            progress_callback=lambda p: None,
+        )
+        print(f"✓ Done — {stats['files_processed']} files, {stats['total_lines']:,} lines")
+        # Best-effort desktop notification, platform-aware.
+        # In headless mode there is no window, so this is the only completion signal.
+        # Each branch fails silently if the notification tool is unavailable —
+        # the output file is always the ground truth.
+        _notify_headless(output.name)
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
 
 def main():
+    args = sys.argv[1:]
+
+    # Strip --headless flag and collect the remaining path tokens
+    headless = '--headless' in args
+    args = [a for a in args if a != '--headless']
+
+    # Reconstruct path (handles filenames with spaces passed as multiple tokens)
+    raw_path = (' '.join(args) if len(args) > 1 and not os.path.exists(args[0]) else args[0]) if args else ''
+    raw_path = raw_path.replace('file://', '').strip()
+    if raw_path.startswith('{') and raw_path.endswith('}'):
+        raw_path = raw_path[1:-1]
+    path = os.path.abspath(os.path.expanduser(raw_path)) if raw_path else ''
+
+    if headless and path:
+        _run_headless(path)
+        return  # sys.exit called inside, but keeps linters happy
+
     if HAS_DND: root = TkinterDnD.Tk()
     else: root = tk.Tk()
     app = CodeCompacterGUI(root)
-    if len(sys.argv) > 1:
-        path = " ".join(sys.argv[1:]) if len(sys.argv) > 2 and not os.path.exists(sys.argv[1]) else sys.argv[1]
-        path = path.replace('file://', '')
-        if path.startswith('{') and path.endswith('}'): path = path[1:-1]
-        path = os.path.abspath(os.path.expanduser(path))
+
+    if path:
         if os.path.isdir(path):
             app.source_path.set(path)
             app.status.set("Ready - click 'Create File' button")
             app.log(f"Selected via argument: {path}")
         elif os.path.isfile(path):
-            parent = os.path.dirname(path)
-            app.source_path.set(parent)
+            app.source_path.set(os.path.dirname(path))
             app.status.set("Ready - click 'Create File' button")
             app.log(f"Selected parent of: {path}")
+
     root.mainloop()
 
 if __name__ == '__main__':

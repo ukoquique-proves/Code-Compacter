@@ -10,7 +10,9 @@
 - `Dockerfile.build` — builds against `python:3.13-slim-bullseye` (glibc 2.31) with `tk-dev` installed, bypassing the host `libpython3.13.so.1.0` and `python3.13-dev` package conflict
 - `docker_build.sh` — one-command build: runs Docker build, extracts `dist/CodeCompacter/` to the workspace
 - `TROUBLESHOOTING.md` documenting all three build blockers encountered and their resolutions
+- `ROADMAP.md` outlining the headless/silent drop mode feature plan
 - `README.md` rewritten to reflect current features, correct install commands, and link to TROUBLESHOOTING.md
+- Headless mode (`--headless`): dropping a folder onto the app icon now compacts it immediately with no window; opening the icon with no argument still opens the GUI; best-effort desktop notification via `notify-send` / `xmessage` on completion
 
 ### Changed
 - `build_linux.sh` now uses `--onedir` instead of `--onefile` as default build mode

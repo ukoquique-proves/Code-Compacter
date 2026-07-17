@@ -1,6 +1,14 @@
 #!/bin/sh
 # Puppy Linux AppRun script
-# This allows the entire folder to act as an application in ROX-Filer
+# This allows the entire folder to act as an application in ROX-Filer.
+#
+# With a path argument (folder dropped onto icon): runs headless, no window.
+# Without a path argument (icon double-clicked):   opens the GUI.
 
 HERE="$(dirname "$(readlink -f "$0")")"
-exec python3 "$HERE/code_compacter_gui.py" "$@"
+
+if [ -n "$1" ]; then
+    exec python3 "$HERE/code_compacter_gui.py" --headless "$@"
+else
+    exec python3 "$HERE/code_compacter_gui.py"
+fi
