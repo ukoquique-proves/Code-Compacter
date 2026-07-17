@@ -94,6 +94,8 @@ tkinter, tkinterdnd2, and drag-and-drop all work correctly this way with no buil
 |---|---|
 | `python3 code_compacter_gui.py` | ✅ works |
 | `python3 code_compacter.py` (CLI) | ✅ works |
+| `--headless` mode (source) | ✅ works, no display required |
+| `--headless` mode (binary) | ✅ smoke-tested inside Docker build |
 | tkinter | ✅ installed (`python3-tk`) |
 | tkinterdnd2 0.6.2 | ✅ installed |
 | Drag-and-drop (source run) | ✅ works |
@@ -128,3 +130,7 @@ Check the Processing Log panel for error messages, or run with visible output:
 ```bash
 ./run_gui_terminal.sh
 ```
+
+#### Headless mode — no notification appears
+
+This is expected on systems without `notify-send`, `xmessage` (Linux), `osascript` (macOS), or PowerShell (Windows). The output file is always created regardless — check next to the source folder for `<foldername>_compact.txt`.

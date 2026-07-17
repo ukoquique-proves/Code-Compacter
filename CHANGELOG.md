@@ -23,6 +23,12 @@
 ### Fixed
 - Standalone binary drag-and-drop was silently broken when built with `--hidden-import tkinterdnd2` alone; `build_linux.sh` fixes this by bundling the tkdnd data files
 - CLI `--ignore` flag was documented in the README options table but never implemented; `code_compacter.py` now accepts `--ignore PATTERN [PATTERN ...]` and passes it through to `compact_directory_logic` as `extra_ignores`
+- Shell injection risk in headless completion notification and `open_output` — replaced `os.system(f'...')` with `subprocess.Popen([...])` list args (no shell) in both cases
+- Headless notification was Linux-only and would silently fail on Windows/macOS; replaced with a platform-aware `_notify_headless()` function (PowerShell toast on Windows, `osascript` on macOS, `notify-send`/`xmessage` on Linux, silent fallback if none available)
+- `docker_build.sh` would fail on repeat runs with "container name already in use"; stale container is now removed before `docker create`
+- `docker_build.sh` sent the entire `dist/` directory (up to 28 MB) as Docker build context; `.dockerignore` now excludes `dist/`, `build/`, `__pycache__/` — context reduced to ~248 KB
+- PyInstaller failed on repeat builds inside Docker with "output directory is not empty"; added `-y` flag to `build_linux.sh`
+- `Dockerfile.build` smoke-tests the packaged binary with `--headless` before extraction, catching silent failures in the built binary that source-level tests miss
 
 ## 1.0.0 — Initial release
 
