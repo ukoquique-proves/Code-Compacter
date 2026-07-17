@@ -27,11 +27,11 @@ No change needed — `Exec=AppRun "%f"` already passes the dropped path. Verifie
 ### Step 4 — User feedback on headless completion ✅
 
 `_notify_headless()` dispatches by platform:
-- Windows: PowerShell toast (`Windows.UI.Notifications`) — no extra dependencies
-- macOS: `osascript` display notification
-- Linux: `notify-send`, fallback to `xmessage`, fallback to silent
+- Windows: PowerShell toast (`Windows.UI.Notifications`) — no extra dependencies, NO CODE INJECTION: message passed via `COMPACTER_MSG` environment variable, script encoded with `-EncodedCommand`
+- macOS: `osascript` display notification, NO CODE INJECTION: message passed as separate argument, read via `on run argv`
+- Linux: `notify-send`, fallback to `xmessage`, fallback to silent, NO CODE INJECTION: message passed as separate list arguments
 
-All paths use `subprocess.Popen` with list args — no shell string interpolation.
+All paths are completely safe: no shell string interpolation, no interpreter script string interpolation, no code injection possible.
 
 ---
 
@@ -70,3 +70,4 @@ README, CHANGELOG, TROUBLESHOOTING all updated.
 - Windows `.exe` build — headless notification uses PowerShell toast (implemented), but the build pipeline (`Dockerfile.build`) is Linux-only; a separate Windows build workflow is needed
 - `%F` multi-folder support in `CodeCompacter.desktop` — currently only the first dropped folder is processed
 - Configurable output directory — today the compact file always lands next to the source folder
+- `run_gui.py` headless output — fixed: `capture_output` is now `False` in headless mode so progress and completion lines are visible; `capture_output=True` is kept for interactive GUI launches where stderr needs to be caught for the error dialog

@@ -15,10 +15,11 @@ try:
     cmd = [sys.executable, 'code_compacter_gui.py']
     if len(sys.argv) > 1:
         cmd.extend(sys.argv[1:])
-        
+
+    headless = '--headless' in sys.argv[1:]
     result = subprocess.run(
         cmd,
-        capture_output=True,
+        capture_output=not headless,
         text=True,
         check=False
     )
