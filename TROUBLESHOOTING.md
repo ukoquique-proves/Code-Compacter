@@ -133,4 +133,4 @@ Check the Processing Log panel for error messages, or run with visible output:
 
 #### Headless mode — no notification appears
 
-This is expected on systems without `notify-send`, `xmessage` (Linux), `osascript` (macOS), or PowerShell (Windows). The output file is always created regardless — check next to the source folder for `<foldername>_compact.txt`.
+This is expected on systems without `notify-send`, `xmessage` (Linux), or PowerShell (Windows). The output file is always created regardless — check next to the source folder for `<foldername>_compact.txt`.

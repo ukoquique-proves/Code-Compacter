@@ -55,7 +55,7 @@ Dropping a folder onto the desktop icon or AppDir runs compaction silently with 
 python3 code_compacter_gui.py --headless /path/to/project
 ```
 
-On completion a desktop notification appears — PowerShell toast on Windows, `osascript` on macOS, `notify-send`/`xmessage` on Linux. If none are available the notification is skipped silently; the output file is always the ground truth. Opening the icon with no argument still opens the full GUI.
+On completion a desktop notification appears — PowerShell toast on Windows, `notify-send`/`xmessage` on Linux. If none are available the notification is skipped silently; the output file is always the ground truth. Opening the icon with no argument still opens the full GUI.
 
 ## CLI
 

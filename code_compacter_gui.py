@@ -223,9 +223,7 @@ class CodeCompacterGUI:
     def open_output(self):
         if self.output_path and self.output_path.exists():
             import subprocess
-            if sys.platform == 'darwin':
-                subprocess.Popen(["open", str(self.output_path)])
-            elif sys.platform == 'win32':
+            if sys.platform == 'win32':
                 os.startfile(self.output_path)
             else:
                 subprocess.Popen(["xdg-open", str(self.output_path)])
@@ -263,19 +261,6 @@ def _notify_headless(filename: str):
                 env=env,
                 creationflags=0x08000000  # CREATE_NO_WINDOW
             )
-
-        elif sys.platform == 'darwin':
-            # macOS notification via osascript — NO CODE INJECTION: use 'quoted form of' in AppleScript
-            # to safely handle any characters in the message, including quotes and backslashes
-            apple_script = '''
-            on run argv
-                set msg to item 1 of argv
-                display notification msg with title "Code Compacter"
-            end run
-            '''
-            subprocess.Popen([
-                "osascript", "-e", apple_script, "-", f"✓ {filename} created"
-            ])
 
         else:
             # Linux / Puppy Linux — NO CODE INJECTION: message passed as separate list arguments
