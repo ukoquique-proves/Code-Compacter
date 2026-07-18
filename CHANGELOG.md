@@ -9,30 +9,34 @@
 - `build_linux.sh` — build script that locates the `tkdnd` Tcl/Tk data directory inside the tkinterdnd2 package and passes it to PyInstaller via `--add-data`, fixing the silent drag-and-drop failure in standalone binaries
 - `Dockerfile.build` — builds against `python:3.13-slim-bullseye` (glibc 2.31) with `tk-dev` installed, bypassing the host `libpython3.13.so.1.0` and `python3.13-dev` package conflict
 - `docker_build.sh` — one-command build: runs Docker build, extracts `dist/CodeCompacter/` to the workspace
+- `.dockerignore` — excludes `dist/`, `build/`, `__pycache__/` from Docker build context (reduces context from ~28 MB to ~248 KB)
 - `TROUBLESHOOTING.md` documenting all three build blockers encountered and their resolutions
-- `ROADMAP.md` outlining the headless/silent drop mode feature plan
+- `ROADMAP.md` — headless mode feature plan, now fully completed
 - `README.md` rewritten to reflect current features, correct install commands, and link to TROUBLESHOOTING.md
-- Headless mode (`--headless`): dropping a folder onto the app icon now compacts it immediately with no window; opening the icon with no argument still opens the GUI; best-effort desktop notification via `notify-send` / `xmessage` on completion
-- `build_windows.bat` — Windows build script for PyInstaller, bundling tkinterdnd2 data files for drag-and-drop support
+- Headless mode (`--headless`): dropping a folder onto the app icon compacts it immediately with no window; opening the icon with no argument still opens the GUI
+- `_notify_headless()` — platform-aware completion notification: PowerShell toast (Windows), `notify-send`/`xmessage` (Linux); swallows all exceptions so a missing notification tool can never fail the run
+- `run_gui.bat` — double-click opens GUI; dropping a folder runs headless (matches `AppRun` behaviour on Linux); uses `python` (not `pythonw`) in headless mode so `✓ Done` output is visible
 
 ### Changed
-- `build_linux.sh` now uses `--onedir` instead of `--onefile` as default build mode
+- `AppRun` updated to pass `--headless "$@"` when called with a path argument; opens GUI when called with no argument
+- `run_gui.py` — `capture_output` is now `False` in headless mode so progress and `✓ Done` lines are visible; GUI mode still captures stderr for the error dialog
+- `build_linux.sh` now uses `--onedir` (directory bundle) instead of `--onefile`, and adds `-y` to allow overwriting existing output without prompting
 - `compact_directory_logic` in `src/core.py` now accepts an `extra_ignores` parameter that merges with `DEFAULT_IGNORES` at runtime
-- Missing `tkinterdnd2` now surfaces in the status bar ("Drag-and-drop not bundled — use Browse or drop onto the desktop icon") instead of only appearing in the processing log
+- Missing `tkinterdnd2` now surfaces in the status bar instead of only the processing log
 - GUI minimum height increased to 540×440 to accommodate the new fields
+- Supported platforms narrowed to Linux and Windows only — macOS/darwin references removed from all files
 
 ### Fixed
+- `CodeCompacter.desktop` had wrong install path (`/root/COMPACTADOR/...`) — corrected to `/root/my-applications/COMPACTADOR/...`; same fix applied to the copy in `COMPACT_SELL`
 - Standalone binary drag-and-drop was silently broken when built with `--hidden-import tkinterdnd2` alone; `build_linux.sh` fixes this by bundling the tkdnd data files
-- CLI `--ignore` flag was documented in the README options table but never implemented; `code_compacter.py` now accepts `--ignore PATTERN [PATTERN ...]` and passes it through to `compact_directory_logic` as `extra_ignores`
-- Shell injection risk in headless completion notification and `open_output`:
-  - Replaced `os.system(f'...')` with `subprocess.Popen([...])` list args (no OS shell)
-  - COMPLETELY fixed interpreter-level injection for Windows PowerShell: no string interpolation of untrusted filename in PowerShell script; message passed via `COMPACTER_MSG` environment variable, script encoded as Base64 with `-EncodedCommand`
-- Headless notification was Linux-only; replaced with a platform-aware `_notify_headless()` function (PowerShell toast on Windows, `notify-send`/`xmessage` on Linux, silent fallback if none available)
-- `docker_build.sh` would fail on repeat runs with "container name already in use"; stale container is now removed before `docker create`
-- `docker_build.sh` sent the entire `dist/` directory (up to 28 MB) as Docker build context; `.dockerignore` now excludes `dist/`, `build/`, `__pycache__/` — context reduced to ~248 KB
-- PyInstaller failed on repeat builds inside Docker with "output directory is not empty"; added `-y` flag to `build_linux.sh`
-- `Dockerfile.build` smoke-tests the packaged binary with `--headless` before extraction, catching silent failures in the built binary that source-level tests miss
-- Headless run could fail with exit code 1 even after successfully writing the compact file; notification failure is now completely guarded, `_notify_headless()` swallows all exceptions, and the call is wrapped in an additional try/except as a double safeguard
+- `CodeCompacter.spec` hardcoded the host tkdnd path; replaced with a dynamic lookup using the same logic as `build_linux.sh`
+- CLI `--ignore` flag was documented but never implemented; `code_compacter.py` now accepts `--ignore PATTERN [PATTERN ...]`
+- Shell injection in `open_output` — replaced `os.system(f'xdg-open "{path}"')` with `subprocess.Popen(["xdg-open", path])` (no shell)
+- Shell injection in headless notification — Windows PowerShell message now passed via `COMPACTER_MSG` env var and `-EncodedCommand` Base64; no filename interpolation in any script string
+- `docker_build.sh` failed on repeat runs with "container name already in use" — stale container is now removed before `docker create`
+- `Dockerfile.build` smoke-tests the packaged binary with `--headless` before extraction, catching silent failures that source-level tests miss
+- `docker_build.sh` verify message pointed at `./dist/CodeCompacter` (a directory) instead of the executable `./dist/CodeCompacter/CodeCompacter`
+- `run_gui.bat` always opened the GUI regardless of arguments — dropping a folder onto it now correctly triggers headless mode, matching the behaviour of `AppRun` on Linux
 
 ## 1.0.0 — Initial release
 
