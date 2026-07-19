@@ -16,6 +16,7 @@
 - Headless mode (`--headless`): dropping a folder onto the app icon compacts it immediately with no window; opening the icon with no argument still opens the GUI
 - `_notify_headless()` — platform-aware completion notification: PowerShell toast (Windows), `notify-send`/`xmessage` (Linux); swallows all exceptions so a missing notification tool can never fail the run
 - `run_gui.bat` — double-click opens GUI; dropping a folder runs headless (matches `AppRun` behaviour on Linux); uses `python` (not `pythonw`) in headless mode so `✓ Done` output is visible
+- `create_windows_shortcut.bat` — automatically generates a Windows `.lnk` Desktop shortcut that supports both double-click execution and drag-and-drop headless compaction.
 
 ### Changed
 - `AppRun` updated to pass `--headless "$@"` when called with a path argument; opens GUI when called with no argument

@@ -20,10 +20,16 @@ Install tkinter on Debian/Puppy Linux:
 apt-get install python3-tk
 ```
 
-Install tkinterdnd2:
+Install tkinterdnd2 (Linux):
 
 ```bash
 pip install -r requirements.txt --break-system-packages
+```
+
+On Windows, standard pip installation is sufficient:
+
+```bash
+pip install -r requirements.txt
 ```
 
 ## Running the GUI
@@ -99,6 +105,19 @@ Total lines: 1,247
 - Lock files: `package-lock.json`, `poetry.lock`, etc.
 
 Extra patterns can be added at runtime via the GUI's "Extra ignores" field or the CLI's `--ignore` flag.
+
+## Windows
+
+**Running the Application:**
+- **GUI:** Double-click the `run_gui.bat` script to launch the application.
+- **Headless Mode:** Drag and drop any project folder onto `run_gui.bat` to compact it silently in the background.
+- **Desktop Shortcut:** To easily run the app from your desktop (just like on Linux), double-click the `create_windows_shortcut.bat` file. This will automatically generate a "Code Compacter" shortcut on your Desktop. You can double-click this shortcut to open the GUI, or drag and drop a folder onto it for silent compaction!
+
+**Building a Standalone Binary:**
+To create a standalone `.exe` that correctly bundles the `tkinterdnd2` dependency (ensuring drag-and-drop works), use the provided build script:
+```cmd
+build_windows.bat
+```
 
 ## Puppy Linux / ROX-Filer
 
